@@ -155,7 +155,7 @@ jobs:
         name: web_rock_paper_scissors-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
         path: web_rock_paper_scissors-${{ matrix.TARGET }}${{ matrix.EXTENSION }}
 
-    - uses: r2k-in-the-vortex/upload-release-action@v2
+    - uses: svenstaro/upload-release-action@v2
       name: Upload binaries to release
       if: ${{ github.event_name == 'push' }}
       with:
