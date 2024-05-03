@@ -1,6 +1,13 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
+const ICONCOUNT: usize = 30;
+const VELOCITYMIN: f32 = 0.4;
+const VELOCITYMAX: f32 = 0.7;
+const GAMEWIDTH: f32 = 640.0;
+const GAMEHEIGHT: f32 = 480.0;
+const ICONSIZE: f32 = 25.0;
+
 // When compiling natively:
 #[cfg(not(target_arch = "wasm32"))]
 fn main() -> eframe::Result<()> {
@@ -8,8 +15,8 @@ fn main() -> eframe::Result<()> {
 
     let native_options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_inner_size([400.0, 300.0])
-            .with_min_inner_size([300.0, 220.0])
+            .with_inner_size([GAMEWIDTH, GAMEHEIGHT])
+            .with_min_inner_size([GAMEWIDTH, GAMEHEIGHT])
             .with_icon(
                 // NOTE: Adding an icon is optional
                 eframe::icon_data::from_png_bytes(&include_bytes!("../assets/icon-256.png")[..])
@@ -17,10 +24,18 @@ fn main() -> eframe::Result<()> {
             ),
         ..Default::default()
     };
+    
+    let mut game: Box<web_rock_paper_scissors::RockPaperScissors<'_>> = Box::new(web_rock_paper_scissors::RockPaperScissors::atsize(GAMEWIDTH, GAMEHEIGHT, ICONSIZE));
+    web_rock_paper_scissors::RockPaperScissors::game_restart(&mut game);
+
     eframe::run_native(
-        "eframe template",
+        "Rock Paper Scissors",
         native_options,
-        Box::new(|cc| Box::new(eframe_template::TemplateApp::new(cc))),
+        Box::new(|cc| {
+            // This gives us image support:
+            egui_extras::install_image_loaders(&cc.egui_ctx);
+            game
+        }),
     )
 }
 
@@ -31,13 +46,20 @@ fn main() {
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 
     let web_options = eframe::WebOptions::default();
+    
+    let mut game: Box<web_rock_paper_scissors::RockPaperScissors<'_>> = Box::new(web_rock_paper_scissors::RockPaperScissors::atsize(GAMEWIDTH, GAMEHEIGHT, ICONSIZE));
+    web_rock_paper_scissors::RockPaperScissors::game_restart(&mut game);
 
     wasm_bindgen_futures::spawn_local(async {
         eframe::WebRunner::new()
             .start(
                 "the_canvas_id", // hardcode it
                 web_options,
-                Box::new(|cc| Box::new(eframe_template::TemplateApp::new(cc))),
+                Box::new(|cc| {
+                    // This gives us image support:
+                    egui_extras::install_image_loaders(&cc.egui_ctx);
+                    game
+                }),
             )
             .await
             .expect("failed to start eframe");

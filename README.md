@@ -1,7 +1,7 @@
 # eframe template
 
-[![dependency status](https://deps.rs/repo/github/emilk/eframe_template/status.svg)](https://deps.rs/repo/github/emilk/eframe_template)
-[![Build Status](https://github.com/emilk/eframe_template/workflows/CI/badge.svg)](https://github.com/emilk/eframe_template/actions?workflow=CI)
+[![dependency status](https://deps.rs/repo/github/r2k-in-the-vortex/learn-egui-rps/status.svg)](https://deps.rs/repo/github/r2k-in-the-vortex/learn-egui-rps)
+[![Build Status](https://github.com/r2k-in-the-vortex/learn-egui-rps/workflows/CI/badge.svg)](https://github.com/r2k-in-the-vortex/learn-egui-rps/actions?workflow=CI)
 
 This is a template repo for [eframe](https://github.com/emilk/egui/tree/master/crates/eframe), a framework for writing apps using [egui](https://github.com/emilk/egui/).
 

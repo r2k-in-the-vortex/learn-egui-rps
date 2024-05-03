@@ -1,109 +1,221 @@
-/// We derive Deserialize/Serialize so we can persist app state on shutdown.
-#[derive(serde::Deserialize, serde::Serialize)]
-#[serde(default)] // if we add new fields, give them default values when deserializing old state
-pub struct TemplateApp {
-    // Example stuff:
-    label: String,
 
-    #[serde(skip)] // This how you opt-out of serialization of a field
-    value: f32,
+const ICONCOUNT: usize = 30;
+const VELOCITYMIN: f32 = 0.4;
+const VELOCITYMAX: f32 = 0.7;
+const GAMEWIDTH: f32 = 640.0;
+const GAMEHEIGHT: f32 = 480.0;
+const ICONSIZE: f32 = 25.0;
+
+use eframe::egui;
+use egui::Ui;
+
+pub struct RockPaperScissors<'a> {
+    rock: egui::Image<'a>,
+    paper: egui::Image<'a>,
+    scissors: egui::Image<'a>,
+    iconsize: f32,
+    fieldh: f32,
+    fieldw: f32,
+    icons: [IconData; ICONCOUNT],
+    finished: bool,
 }
 
-impl Default for TemplateApp {
+
+impl<'a> RockPaperScissors<'a> {
+    pub fn atsize(width: f32, height: f32, size: f32) -> Self {
+        let rock_icon = egui::include_image!("../assets/rock.png");
+
+
+        Self {
+            iconsize : size,
+            fieldh : height,
+            fieldw : width,
+            rock: egui::Image::new(rock_icon.clone()),
+            paper: egui::Image::new(egui::include_image!("../assets/paper.png")),
+            scissors: egui::Image::new(egui::include_image!("../assets/scissors.png")),
+            icons: [IconData::default(); ICONCOUNT],
+            finished: false,
+        }
+    }
+
+    pub fn game_restart(game: &mut RockPaperScissors<'_>) {
+        for icon in game.icons.iter_mut() {
+            icon.icontype = random_icon_type();
+            icon.position = random_position(ICONSIZE, GAMEWIDTH, GAMEHEIGHT);
+            icon.velocity = random_velocity(VELOCITYMIN, VELOCITYMAX);
+        }
+        game.finished = false;
+    }
+}
+
+
+fn random_icon_type() -> IconType{
+    let i = rand::random::<u32>() % 3;
+    match i {
+        0 => IconType::Rock,
+        1 => IconType::Paper,
+        2 => IconType::Scissors,
+        _ => IconType::Rock,
+    }
+}
+
+fn random_position(iconsize: f32, width: f32, height: f32) -> egui::Pos2 {
+    let mut rng = rand::thread_rng();
+    let x: f32 = iconsize/2.0 + rand::Rng::gen::<f32>(&mut rng) * (width - iconsize); 
+    let y: f32 = iconsize/2.0 + rand::Rng::gen::<f32>(&mut rng) * (height - iconsize); 
+    egui::Pos2::new(x, y)
+}
+
+fn random_velocity(velocitymin: f32, velocitymax: f32) -> egui::Vec2 {
+    let mut rng = rand::thread_rng();
+    let dir = rand::Rng::gen::<f32>(&mut rng) * 360.0;
+    let velo = velocitymin + rand::Rng::gen::<f32>(&mut rng) * (velocitymax - velocitymin);
+    let x = dir.sin() * velo;
+    let y = dir.cos() * velo;
+    egui::Vec2::new(x, y)
+}
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+enum IconType {
+    Rock,
+    Paper,
+    Scissors,
+}
+
+impl std::fmt::Display for IconType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self{
+            IconType::Rock => write!(f, "Rock"),
+            IconType::Paper => write!(f, "Paper"),
+            IconType::Scissors => write!(f, "Scissors"),
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+struct IconData {
+    icontype: IconType,
+    position: egui::Pos2,
+    velocity: egui::Vec2,
+}
+
+impl IconData {
     fn default() -> Self {
         Self {
-            // Example stuff:
-            label: "Hello World!".to_owned(),
-            value: 2.7,
+            icontype: IconType::Rock,
+            position: egui::Pos2::new(0.0, 0.0),
+            velocity: egui::Vec2::new(0.0, 0.0),
         }
     }
 }
 
-impl TemplateApp {
-    /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // This is also where you can customize the look and feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        }
-
-        Default::default()
+fn moveposition(icon: &mut IconData, xmin: f32, xmax: f32, ymin: f32, ymax: f32) {
+    let mut x = icon.position.x + icon.velocity.x;
+    let mut y = icon.position.y + icon.velocity.y;
+    if x < xmin {
+        icon.velocity.x = -icon.velocity.x;
+        x = icon.position.x + icon.velocity.x;
     }
+    if x > xmax {
+        icon.velocity.x = -icon.velocity.x;
+        x = icon.position.x + icon.velocity.x;
+    }
+    if y < ymin {
+        icon.velocity.y = -icon.velocity.y;
+        y = icon.position.y + icon.velocity.y;
+    }
+    if y > ymax {
+        icon.velocity.y = -icon.velocity.y;
+        y = icon.position.y + icon.velocity.y;
+    }
+
+    icon.position.x = x;
+    icon.position.y = y;
 }
 
-impl eframe::App for TemplateApp {
-    /// Called by the frame work to save state before shutdown.
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, self);
-    }
+fn icon_distace(a: IconData, b: &mut IconData) -> f32 {
+    let dx = a.position.x - b.position.x;
+    let dy = a.position.y - b.position.y;
+    (dx*dx + dy*dy).sqrt()
+}
 
-    /// Called each time the UI needs repainting, which may be many times per second.
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
-        // For inspiration and more examples, go to https://emilk.github.io/egui
+fn paint_icons(game: &mut RockPaperScissors<'_>,ui: &mut Ui) {
+    let xmin = game.iconsize / 2.0;
+    let xmax = game.fieldw - game.iconsize / 2.0;
+    let ymin = game.iconsize / 2.0;
+    let ymax = game.fieldh - game.iconsize / 2.0;
+    let size = egui::Vec2::new(game.iconsize, game.iconsize);
 
-        egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
-            // The top panel is often a good place for a menu bar:
-
-            egui::menu::bar(ui, |ui| {
-                // NOTE: no File->Quit on web pages!
-                let is_web = cfg!(target_arch = "wasm32");
-                if !is_web {
-                    ui.menu_button("File", |ui| {
-                        if ui.button("Quit").clicked() {
-                            ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                        }
-                    });
-                    ui.add_space(16.0);
+    // collisions check
+    for icon in game.icons {
+        for bicon in game.icons.iter_mut() {
+            if icon_distace(icon, bicon) < game.iconsize {
+                if bicon.icontype == IconType::Rock && icon.icontype == IconType::Paper {
+                    bicon.icontype = IconType::Paper;
+                } 
+                if bicon.icontype == IconType::Paper && icon.icontype == IconType::Scissors {
+                    bicon.icontype = IconType::Scissors;
                 }
-
-                egui::widgets::global_dark_light_mode_buttons(ui);
-            });
-        });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // The central panel the region left after adding TopPanel's and SidePanel's
-            ui.heading("eframe template");
-
-            ui.horizontal(|ui| {
-                ui.label("Write something: ");
-                ui.text_edit_singleline(&mut self.label);
-            });
-
-            ui.add(egui::Slider::new(&mut self.value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                self.value += 1.0;
+                if bicon.icontype == IconType::Scissors && icon.icontype == IconType::Rock {
+                    bicon.icontype = IconType::Rock;
+                }
             }
+        }
+    }
 
-            ui.separator();
+    // game end check
+    let firsttype = game.icons[0].icontype;
+    game.finished = true;
+    for icon in game.icons {
+        if icon.icontype != firsttype {
+            game.finished = false;
+            break;
+        }
+    }
 
-            ui.add(egui::github_link_file!(
-                "https://github.com/emilk/eframe_template/blob/main/",
-                "Source code."
-            ));
+    for icon in game.icons.iter_mut() {
+        if !game.finished {
+            moveposition(icon, xmin, xmax, ymin, ymax);
+        }
 
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
-                powered_by_egui_and_eframe(ui);
-                egui::warn_if_debug_build(ui);
+        let rect = egui::Rect::from_center_size(icon.position, size);
+
+        if icon.icontype == IconType::Rock {
+            game.rock.paint_at(ui, rect)
+        }
+        if icon.icontype == IconType::Paper {
+            game.paper.paint_at(ui, rect)
+        }
+        if icon.icontype == IconType::Scissors {
+            game.scissors.paint_at(ui, rect)
+        }
+    }
+
+    if !game.finished {
+        return;
+    }
+    egui::Frame::default()
+        .inner_margin(24.0)
+        .fill(egui::Color32::from_rgba_unmultiplied(125, 135, 113, 184))
+        .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
+        .rounding(ui.visuals().widgets.noninteractive.rounding)
+        .show(ui, |ui| {
+            ui.vertical_centered(|ui| {
+
+                ui.label(format!("Game has ended with victory for {}", firsttype));
+                if ui.button("New game").clicked() {
+                    RockPaperScissors::game_restart(game);
+                }
             });
         });
-    }
+    
 }
 
-fn powered_by_egui_and_eframe(ui: &mut egui::Ui) {
-    ui.horizontal(|ui| {
-        ui.spacing_mut().item_spacing.x = 0.0;
-        ui.label("Powered by ");
-        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-        ui.label(" and ");
-        ui.hyperlink_to(
-            "eframe",
-            "https://github.com/emilk/egui/tree/master/crates/eframe",
-        );
-        ui.label(".");
-    });
+
+impl<'a> eframe::App for RockPaperScissors<'a> {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        ctx.request_repaint();
+        egui::CentralPanel::default().show(ctx, |ui| paint_icons(self, ui));
+    }
 }

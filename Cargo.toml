@@ -1,9 +1,17 @@
 [package]
-name = "eframe_template"
+name = "web_rock_paper_scissors"
 version = "0.1.0"
-authors = ["Emil Ernerfeldt <emil.ernerfeldt@gmail.com>"]
+authors = ["r2k"]
 edition = "2021"
-include = ["LICENSE-APACHE", "LICENSE-MIT", "**/*.rs", "Cargo.toml"]
+include = [
+    "LICENSE-APACHE", 
+    "LICENSE-MIT", 
+    "**/*.rs", 
+    "Cargo.toml",
+    "assets/paper.png",
+    "assets/rock.png",
+    "assets/scissors.png"
+    ]
 rust-version = "1.76"
 
 [package.metadata.docs.rs]
@@ -22,6 +30,9 @@ log = "0.4"
 
 # You only need serde if you want app persistence:
 serde = { version = "1", features = ["derive"] }
+rand = "0.8.5"
+egui_extras = { version = "0.27.2", features = ["image"] }
+getrandom = { version = "0.2.14", features = ["js"] }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
