@@ -1,4 +1,3 @@
-
 const ICONCOUNT: usize = 30;
 const VELOCITYMIN: f32 = 0.4;
 const VELOCITYMAX: f32 = 0.7;
@@ -20,16 +19,14 @@ pub struct RockPaperScissors<'a> {
     finished: bool,
 }
 
-
 impl<'a> RockPaperScissors<'a> {
     pub fn atsize(width: f32, height: f32, size: f32) -> Self {
         let rock_icon = egui::include_image!("../assets/rock.png");
 
-
         Self {
-            iconsize : size,
-            fieldh : height,
-            fieldw : width,
+            iconsize: size,
+            fieldh: height,
+            fieldw: width,
             rock: egui::Image::new(rock_icon.clone()),
             paper: egui::Image::new(egui::include_image!("../assets/paper.png")),
             scissors: egui::Image::new(egui::include_image!("../assets/scissors.png")),
@@ -48,8 +45,7 @@ impl<'a> RockPaperScissors<'a> {
     }
 }
 
-
-fn random_icon_type() -> IconType{
+fn random_icon_type() -> IconType {
     let i = rand::random::<u32>() % 3;
     match i {
         0 => IconType::Rock,
@@ -61,8 +57,8 @@ fn random_icon_type() -> IconType{
 
 fn random_position(iconsize: f32, width: f32, height: f32) -> egui::Pos2 {
     let mut rng = rand::thread_rng();
-    let x: f32 = iconsize/2.0 + rand::Rng::gen::<f32>(&mut rng) * (width - iconsize); 
-    let y: f32 = iconsize/2.0 + rand::Rng::gen::<f32>(&mut rng) * (height - iconsize); 
+    let x: f32 = iconsize / 2.0 + rand::Rng::gen::<f32>(&mut rng) * (width - iconsize);
+    let y: f32 = iconsize / 2.0 + rand::Rng::gen::<f32>(&mut rng) * (height - iconsize);
     egui::Pos2::new(x, y)
 }
 
@@ -84,7 +80,7 @@ enum IconType {
 
 impl std::fmt::Display for IconType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self{
+        match self {
             IconType::Rock => write!(f, "Rock"),
             IconType::Paper => write!(f, "Paper"),
             IconType::Scissors => write!(f, "Scissors"),
@@ -108,7 +104,6 @@ impl IconData {
         }
     }
 }
-
 
 fn moveposition(icon: &mut IconData, xmin: f32, xmax: f32, ymin: f32, ymax: f32) {
     let mut x = icon.position.x + icon.velocity.x;
@@ -137,10 +132,10 @@ fn moveposition(icon: &mut IconData, xmin: f32, xmax: f32, ymin: f32, ymax: f32)
 fn icon_distace(a: IconData, b: &mut IconData) -> f32 {
     let dx = a.position.x - b.position.x;
     let dy = a.position.y - b.position.y;
-    (dx*dx + dy*dy).sqrt()
+    (dx * dx + dy * dy).sqrt()
 }
 
-fn paint_icons(game: &mut RockPaperScissors<'_>,ui: &mut Ui) {
+fn paint_icons(game: &mut RockPaperScissors<'_>, ui: &mut Ui) {
     let xmin = game.iconsize / 2.0;
     let xmax = game.fieldw - game.iconsize / 2.0;
     let ymin = game.iconsize / 2.0;
@@ -153,7 +148,7 @@ fn paint_icons(game: &mut RockPaperScissors<'_>,ui: &mut Ui) {
             if icon_distace(icon, bicon) < game.iconsize {
                 if bicon.icontype == IconType::Rock && icon.icontype == IconType::Paper {
                     bicon.icontype = IconType::Paper;
-                } 
+                }
                 if bicon.icontype == IconType::Paper && icon.icontype == IconType::Scissors {
                     bicon.icontype = IconType::Scissors;
                 }
@@ -202,16 +197,13 @@ fn paint_icons(game: &mut RockPaperScissors<'_>,ui: &mut Ui) {
         .rounding(ui.visuals().widgets.noninteractive.rounding)
         .show(ui, |ui| {
             ui.vertical_centered(|ui| {
-
                 ui.label(format!("Game has ended with victory for {}", firsttype));
                 if ui.button("New game").clicked() {
                     RockPaperScissors::game_restart(game);
                 }
             });
         });
-    
 }
-
 
 impl<'a> eframe::App for RockPaperScissors<'a> {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {

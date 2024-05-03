@@ -1,9 +1,6 @@
 #![warn(clippy::all, rust_2018_idioms)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")] // hide console window on Windows in release
 
-const ICONCOUNT: usize = 30;
-const VELOCITYMIN: f32 = 0.4;
-const VELOCITYMAX: f32 = 0.7;
 const GAMEWIDTH: f32 = 640.0;
 const GAMEHEIGHT: f32 = 480.0;
 const ICONSIZE: f32 = 25.0;
@@ -24,8 +21,10 @@ fn main() -> eframe::Result<()> {
             ),
         ..Default::default()
     };
-    
-    let mut game: Box<web_rock_paper_scissors::RockPaperScissors<'_>> = Box::new(web_rock_paper_scissors::RockPaperScissors::atsize(GAMEWIDTH, GAMEHEIGHT, ICONSIZE));
+
+    let mut game: Box<web_rock_paper_scissors::RockPaperScissors<'_>> = Box::new(
+        web_rock_paper_scissors::RockPaperScissors::atsize(GAMEWIDTH, GAMEHEIGHT, ICONSIZE),
+    );
     web_rock_paper_scissors::RockPaperScissors::game_restart(&mut game);
 
     eframe::run_native(
@@ -46,8 +45,10 @@ fn main() {
     eframe::WebLogger::init(log::LevelFilter::Debug).ok();
 
     let web_options = eframe::WebOptions::default();
-    
-    let mut game: Box<web_rock_paper_scissors::RockPaperScissors<'_>> = Box::new(web_rock_paper_scissors::RockPaperScissors::atsize(GAMEWIDTH, GAMEHEIGHT, ICONSIZE));
+
+    let mut game: Box<web_rock_paper_scissors::RockPaperScissors<'_>> = Box::new(
+        web_rock_paper_scissors::RockPaperScissors::atsize(GAMEWIDTH, GAMEHEIGHT, ICONSIZE),
+    );
     web_rock_paper_scissors::RockPaperScissors::game_restart(&mut game);
 
     wasm_bindgen_futures::spawn_local(async {
